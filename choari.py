@@ -14,7 +14,7 @@ import os
 import curses
 
 # CONSTANTS
-CFG_DIR = '~/.choari'
+CFG_DIR = os.path.expanduser('~/.choari')
 PADDING_Y = 2;
 PADDING_X = 2;
 
