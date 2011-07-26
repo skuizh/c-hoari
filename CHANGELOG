@@ -1,0 +1,16 @@
+C'hoari ChangeLog
+
+Legend:
+=======
++ New feature added or made an existing one better
+- Removed a feature, or something bad happened
+* Fixed a bug
+! Changed something important, probably incompatibly.
+
+
+0.1.0 - [2011.07.26]
+	+ add simple curses interface
+	+ add pages per games (type :<game> ; e.g. :q3)
+	+ add help display (type :h or :help)
+	+ add refresh command (type :e)
+	+ add quit command (type :q or :quit or q or Q)

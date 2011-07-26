@@ -1,0 +1,33 @@
+About C'hoari 0.1.0
+====================
+
+C'hoari is a python front-end for QStat.
+
+
+
+System Requirements (well, only tested on)
+==========================================
+
+- GNU/Linux Gentoo
+- python 2.6.6
+- qstat 2.11
+
+
+
+Usage
+=====
+
+python choari.py
+
+
+
+Commands
+========
+
+:moh		- display mohaa servers
+:q3			- display quake 3 servers
+:<game>		- many others games available
+:e			- refresh servers (from current page)
+:help		- display help
+:q			- quit C'hoari
+
