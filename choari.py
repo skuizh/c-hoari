@@ -120,8 +120,6 @@ class Choari:
         
     def bookmark(self, game, host):
         return self.add(game, host, fav=True)
-        
-
 
 def clear_help(stdscr):
     stdscr_y, stdscr_x = stdscr.getmaxyx()
@@ -177,6 +175,10 @@ def loop(stdscr):
     strgame = ""
     showHelp = False
     currentPage = "fav"
+    tabbing = ['add', 'bookmark', 'e', 'refresh', 'h', 'help', 'q', 'quit']
+    for alias in choari.alias:
+        tabbing.append(alias)
+    tabbing.sort()
 
     stdscr.clear()
     stdscr_y, stdscr_x = stdscr.getmaxyx()
@@ -212,19 +214,51 @@ def loop(stdscr):
                 stdscr.clrtoeol()
                 stdscr.addstr(':')
                 strgame = ""
+                tab = False
                 while (1):
                     ch = stdscr.getch()
                     if 0<ch<256:
+                        # stdscr.addstr('%i'%(ch))
                         if ch == 10:
                             # enter
+                            if tab == True:
+                                strgame = tabwords[tabmark]
                             break;
+                        elif ch == 9:
+                            # tabulation
+                            if tab == False:
+                                tab = True
+                                tabmark = 0
+                                tabwords = [strgame]
+                                tablen = len(strgame)
+                                for word in tabbing:
+                                    if word[:tablen] == strgame:
+                                        tabwords.append(word)
+                                tabwordslen = len(tabwords)
+                                
+                            oldlen = len(tabwords[tabmark][tablen:])
+                            tabmark = tabmark + 1
+                            if tabmark >= tabwordslen:
+                                tabmark = 0
+                            
+                            cy, cx = stdscr.getyx()
+                            for l in range(0, oldlen):
+                                stdscr.delch(cy, cx)
+                            stdscr.addstr(cy, cx, tabwords[tabmark][tablen:])
+                            stdscr.move(cy, cx)
+                            
                         elif ch == 127:
                             # backspace
+                            tab = False
                             cy, cx = stdscr.getyx()
-                            stdscr.delch(cy, cx-1)
-                            stdscr.move(cy, cx-1)
-                            strgame = strgame[:-1]
+                            if cx == PADDING_X:
+                                break
+                            elif cx > PADDING_X:
+                                stdscr.delch(cy, cx-1)
+                                stdscr.move(cy, cx-1)
+                                strgame = strgame[:-1]
                         else:
+                            tab = False
                             stdscr.addstr(chr(ch))
                             strgame += chr(ch)
                 if ch != 033:
