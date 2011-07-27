@@ -91,31 +91,37 @@ class Choari:
                     self.games.get(game).append(line.strip())
             f.close
 
-    def refresh(self, game, ip, showPlayers=False):
+    def refresh(self, game, host, showPlayers=False):
         if game not in self.games:
             if game not in self.alias:
                 return False
             else:
                 game = self.alias.get(game)
         if game != 'fav':
-            p = os.popen("qstat -P -"+game+" "+ip, "r")
+            p = os.popen("qstat -P -"+game+" "+host, "r")
             text = p.read()
             p.close()
             return game+" | "+text
         return ""
 
-    def add(self, game, ip, fav=False):
+    def add(self, game, host, fav=False):
         if fav == True:
-            ip = game+"|"+ip
+            host = game+"|"+host
             game = "fav"
-        f = open(CFG_DIR+'/'+game+".lst", "a+");
-        f.write(ip+"\n")
-        f.close()
-        self.games.get(game).append(ip)
+
+        if host not in self.games[game]:
+            f = open(CFG_DIR+'/'+game+".lst", "a+");
+            f.write(host+"\n")
+            f.close()
+            self.games[game].append(host)
+            return True
+        else:
+            return False
         
-    def bookmark(self, game, ip):
-        self.add(game, ip, fav=True)
+    def bookmark(self, game, host):
+        return self.add(game, host, fav=True)
         
+
 
 def clear_help(stdscr):
     stdscr_y, stdscr_x = stdscr.getmaxyx()
@@ -149,16 +155,16 @@ def display_servers(stdscr, choari, strgame):
         stdscr.addstr(PADDING_Y, PADDING_X, "C'hoari - %s"%(strgame))
     
     i = PADDING_Y+3
-    numip = 0
+    numhost = 0
     game = strgame
-    for ip in choari.games.get(strgame):
+    for host in choari.games[strgame]:
         if strgame == 'fav':
-            game = ip.split('|')[0]
-            ip = ip.split('|')[1]
-        numip = numip + 1
-        text = choari.refresh(game, ip, True).split("\n")
+            game = host.split('|')[0]
+            host = host.split('|')[1]
+        numhost = numhost + 1
+        text = choari.refresh(game, host, True).split("\n")
         if len(text) > 1:
-            stdscr.addstr(i, 2, '#%i %s'%(numip, text[1]))
+            stdscr.addstr(i, 2, '#%i %s'%(numhost, text[1]))
             if len(text) > 2:
                 i = i + 1
                 for line in text[2:]:
@@ -249,11 +255,16 @@ def loop(stdscr):
                             # play
                             pass
                         elif lstgame[0] == 'bookmark':
-                            if len(lstgame) == 2:
+                            if currentPage == 'fav':
+                                # show error message
+                                stdscr.addstr(stdscr_y-3, PADDING_X, 'already in your bookmarks')
+                            elif len(lstgame) == 2:
                                 try:
                                     lstgame[1] = int(lstgame[1])
                                     if len(choari.games[currentPage]) >= lstgame[1]:
-                                        choari.bookmark(currentPage, choari.games[currentPage][lstgame[1]-1])
+                                        if choari.bookmark(currentPage, choari.games[currentPage][lstgame[1]-1]) == False:
+                                            # show error message
+                                            stdscr.addstr(stdscr_y-3, PADDING_X, 'already in your bookmarks')
                                     else:
                                         # show error message
                                         stdscr.addstr(stdscr_y-3, PADDING_X, 'wrong index')
@@ -266,29 +277,41 @@ def loop(stdscr):
                             error = True
                             game = currentPage
                             if len(lstgame) == 2:
-                                ip = lstgame[1]
-                                error = False
+                                if currentPage == 'fav':
+                                    stdscr.addstr(stdscr_y-3, PADDING_X, 'missing game')
+                                else:
+                                    host = lstgame[1]
+                                    error = False
                             elif len(lstgame) == 3:
                                 if lstgame[1] == 'fav':
                                     stdscr.addstr(stdscr_y-3, PADDING_X, 'use :bookmark <#id> syntax')
                                 elif lstgame[1] in choari.alias:
                                     game = choari.alias[lstgame[1]]
-                                    ip = lstgame[2]
+                                    host = lstgame[2]
                                     error = False
                                 else:
                                     # show error message
                                     stdscr.addstr(stdscr_y-3, PADDING_X, 'unknow game "%s"'%(lstgame[1]))
 
                             if error == False:
-                                choari.add(game, ip)
-                                if game == currentPage:
-                                    display_servers(stdscr, choari, currentPage)
+                                if currentPage == 'fav':
+                                    fav = True
+                                else:
+                                    fav = False
+                                if choari.add(game, host, fav) == False:
+                                    # show error message
+                                    stdscr.addstr(stdscr_y-3, PADDING_X, 'already in your bookmarks')
+                                else:
+                                    # refresh
+                                    if game == currentPage or currentPage == 'fav':
+                                        display_servers(stdscr, choari, currentPage)
                 if strgame not in ['h','help'] and showHelp == True:
                     clear_help(stdscr)
                     showHelp = False
             elif c == 127:
                 # backspace
                 display_servers(stdscr, choari, 'fav')
+                currentGame = 'fav'
             elif chr(c) in 'Qq':
                 break
             elif strgame in ['q','quit']:
