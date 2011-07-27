@@ -274,7 +274,7 @@ def loop(stdscr):
             elif c == 127:
                 # backspace
                 display_servers(stdscr, choari, 'fav')
-            elif c in 'Qq':
+            elif chr(c) in 'Qq':
                 break
             elif strgame in ['q','quit']:
                 break
