@@ -13,6 +13,7 @@
 import os
 import sys
 import curses
+from subprocess import *
 
 # CONSTANTS
 CFG_DIR = os.path.expanduser('~/.choari')
@@ -102,7 +103,7 @@ class Choari:
             else:
                 game = self.alias.get(game)
         if game != 'fav':
-            p = os.popen('qstat -P -'+game+' '+host, 'r')
+            p = Popen('qstat -P -'+game+' '+host, shell=True, stdout=PIPE).stdout
             text = p.read()
             p.close()
             return game+' | '+text
