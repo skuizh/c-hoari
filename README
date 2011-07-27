@@ -24,12 +24,12 @@ python choari.py
 Commands
 ========
 
-:moh				- display mohaa servers
-:q3					- display quake 3 servers
-:<game>				- many others games available
-:add [game] <ip> 	- add server
-:bookmark <id>	 	- bookmark server
-:e					- refresh servers (from current page)
-:help				- display help
-:q					- quit C'hoari
+:moh                - display mohaa servers
+:q3                 - display quake 3 servers
+:<game>             - many others games available
+:add [game] <ip>    - add server
+:bookmark <id>      - bookmark server
+:e                  - refresh servers (from current page)
+:help               - display help
+:q                  - quit C'hoari
 
