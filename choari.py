@@ -11,6 +11,7 @@
 # ----------------------------------------------------------------------------
 
 import os
+import sys
 import curses
 
 # CONSTANTS
@@ -77,19 +78,22 @@ class Choari:
                         'ws':'warsows', # query Warsow server
                         'et':'woets'}   # query Enemy Territory server
 
-        if not os.path.isdir(CFG_DIR):
-            os.mkdir(CFG_DIR)
-            p = os.popen("touch "+CFG_DIR+"/fav.lst", "r")
-            p.close()
+        try:
+            if not os.path.isdir(CFG_DIR):
+                os.mkdir(CFG_DIR)
+                f = open(CFG_DIR+'/fav.lst', 'a');
+                f.close()
 
-        for cfg in os.listdir(CFG_DIR):
-            # read all files in CFG_DIR
-            f = open(CFG_DIR+'/'+cfg, 'r')
-            game = cfg[:-4]
-            if game in self.games:
-                for line in f:
-                    self.games.get(game).append(line.strip())
-            f.close
+            for cfg in os.listdir(CFG_DIR):
+                # read all files in CFG_DIR
+                f = open(CFG_DIR+'/'+cfg, 'r')
+                game = cfg[:-4]
+                if game in self.games:
+                    for line in f:
+                        self.games.get(game).append(line.strip())
+                f.close
+        except:
+            sys.exit('can\'t write or read in '+CFG_DIR)
 
     def refresh(self, game, host, showPlayers=False):
         if game not in self.games:
@@ -98,19 +102,19 @@ class Choari:
             else:
                 game = self.alias.get(game)
         if game != 'fav':
-            p = os.popen("qstat -P -"+game+" "+host, "r")
+            p = os.popen('qstat -P -'+game+' '+host, 'r')
             text = p.read()
             p.close()
-            return game+" | "+text
+            return game+' | '+text
         return ""
 
     def add(self, game, host, fav=False):
         if fav == True:
-            host = game+"|"+host
-            game = "fav"
+            host = game+'|'+host
+            game = 'fav'
 
         if host not in self.games[game]:
-            f = open(CFG_DIR+'/'+game+".lst", "a+");
+            f = open(CFG_DIR+'/'+game+'.lst', 'a+');
             f.write(host+"\n")
             f.close()
             self.games[game].append(host)
@@ -131,14 +135,14 @@ def clear_help(stdscr):
 def display_help(stdscr):
     stdscr_y, stdscr_x = stdscr.getmaxyx()
     y = stdscr_y-PADDING_Y
-    stdscr.addstr(y-9, PADDING_X, "HELP")
-    stdscr.addstr(y-8, PADDING_X, ":fav | :favorite - Display favorite servers")
-    stdscr.addstr(y-7, PADDING_X, ":moh | :mohaa - Display mohaa servers")
-    stdscr.addstr(y-6, PADDING_X, ":q3 | :quake3 - Display quake3 servers")
-    stdscr.addstr(y-5, PADDING_X, ":# - Refresh server # (unavailable yet)")
-    stdscr.addstr(y-4, PADDING_X, ":e - Refresh current page")
-    stdscr.addstr(y-3, PADDING_X, ":h | :help - Display this message")
-    stdscr.addstr(y-2, PADDING_X, ":q | :quit - Quit C'hoari")
+    stdscr.addstr(y-9, PADDING_X, 'HELP')
+    stdscr.addstr(y-8, PADDING_X, ':fav | :favorite - Display favorite servers')
+    stdscr.addstr(y-7, PADDING_X, ':moh | :mohaa - Display mohaa servers')
+    stdscr.addstr(y-6, PADDING_X, ':q3 | :quake3 - Display quake3 servers')
+    stdscr.addstr(y-5, PADDING_X, ':# - Refresh server # (unavailable yet)')
+    stdscr.addstr(y-4, PADDING_X, ':e - Refresh current page')
+    stdscr.addstr(y-3, PADDING_X, ':h | :help - Display this message')
+    stdscr.addstr(y-2, PADDING_X, ':q | :quit - Quit C\'hoari')
 
 def display_servers(stdscr, choari, strgame):
     # erase previous page
@@ -148,9 +152,9 @@ def display_servers(stdscr, choari, strgame):
     stdscr.move(PADDING_Y, PADDING_X)
     stdscr.clrtoeol()
     if strgame == 'fav':
-        stdscr.addstr(PADDING_Y, PADDING_X, "C'hoari - Main menu")
+        stdscr.addstr(PADDING_Y, PADDING_X, 'C\'hoari - Main menu')
     else:
-        stdscr.addstr(PADDING_Y, PADDING_X, "C'hoari - %s"%(strgame))
+        stdscr.addstr(PADDING_Y, PADDING_X, 'C\'hoari - %s'%(strgame))
     
     i = PADDING_Y+3
     numhost = 0
@@ -172,9 +176,9 @@ def display_servers(stdscr, choari, strgame):
 def loop(stdscr):
     # init
     choari = Choari()
-    strgame = ""
+    strgame = ''
     showHelp = False
-    currentPage = "fav"
+    currentPage = 'fav'
     tabbing = ['add', 'bookmark', 'e', 'refresh', 'h', 'help', 'q', 'quit']
     for alias in choari.alias:
         tabbing.append(alias)
@@ -195,9 +199,9 @@ def loop(stdscr):
     stdscr.refresh() """
     
     # set title
-    stdscr.addstr(PADDING_Y, PADDING_X, "C'hoari - Main menu")
-    stdscr.addstr(PADDING_Y+1, PADDING_X, "------------------------------------------------------------------")
-    stdscr.addstr(PADDING_Y+2, PADDING_X, "ID       ADDRESS             PLAYERS MAP     RESPONSE TIME    NAME")
+    stdscr.addstr(PADDING_Y, PADDING_X, 'C\'hoari - Main menu')
+    stdscr.addstr(PADDING_Y+1, PADDING_X, '------------------------------------------------------------------')
+    stdscr.addstr(PADDING_Y+2, PADDING_X, 'ID       ADDRESS             PLAYERS MAP     RESPONSE TIME    NAME')
     stdscr.refresh()
     stdscr.move(stdscr_y-PADDING_Y, PADDING_X)
 
@@ -205,7 +209,7 @@ def loop(stdscr):
     while (1):
         c = stdscr.getch()                # Get a keystroke
         if 0<c<256:
-            stdscr.addstr('%i'%c)
+            # stdscr.addstr('%i'%(c))
             if chr(c) in ':':
                 # waiting for commands
                 stdscr.move(stdscr_y-3, PADDING_X)
@@ -265,7 +269,7 @@ def loop(stdscr):
                     if strgame in choari.alias:
                         strgame = choari.alias[strgame]
 
-                    if strgame == "e":
+                    if strgame == 'e':
                         strgame = currentPage
 
                     if strgame in ['h','help']:
