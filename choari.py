@@ -113,6 +113,9 @@ class Choari:
         f.close()
         self.games.get(game).append(ip)
         
+    def bookmark(self, game, ip):
+        self.add(game, ip, fav=True)
+        
 
 def clear_help(stdscr):
     stdscr_y, stdscr_x = stdscr.getmaxyx()
@@ -197,6 +200,8 @@ def loop(stdscr):
             stdscr.addstr('%i'%c)
             if chr(c) in ':':
                 # waiting for commands
+                stdscr.move(stdscr_y-3, PADDING_X)
+                stdscr.clrtoeol()
                 stdscr.move(stdscr_y-2, PADDING_X)
                 stdscr.clrtoeol()
                 stdscr.addstr(':')
@@ -243,31 +248,41 @@ def loop(stdscr):
                         if lstgame[0] == 'play':
                             # play
                             pass
+                        elif lstgame[0] == 'bookmark':
+                            if len(lstgame) == 2:
+                                try:
+                                    lstgame[1] = int(lstgame[1])
+                                    if len(choari.games[currentPage]) >= lstgame[1]:
+                                        choari.bookmark(currentPage, choari.games[currentPage][lstgame[1]-1])
+                                    else:
+                                        # show error message
+                                        stdscr.addstr(stdscr_y-3, PADDING_X, 'wrong index')
+                                except:
+                                    # show error message
+                                    stdscr.addstr(stdscr_y-3, PADDING_X, 'param must be an integer')
+                            else:
+                                stdscr.addstr(stdscr_y-3, PADDING_X, 'syntax is :bookmark <#id>')
                         elif lstgame[0] == 'add':
+                            error = True
                             game = currentPage
                             if len(lstgame) == 2:
                                 ip = lstgame[1]
+                                error = False
                             elif len(lstgame) == 3:
                                 if lstgame[1] == 'fav':
-                                    try:
-                                        # TODO
-                                        lstgame[2] = int(lstgame[2])
-                                        choari.add(currentPage, choari.games[currentPage][lstgame[2]], fav=True)
-                                    except:
-                                        # show error message
-                                        pass
-                                    pass
+                                    stdscr.addstr(stdscr_y-3, PADDING_X, 'use :bookmark <#id> syntax')
                                 elif lstgame[1] in choari.alias:
                                     game = choari.alias[lstgame[1]]
+                                    ip = lstgame[2]
+                                    error = False
                                 else:
                                     # show error message
-                                    pass
-                                ip = lstgame[2]
-                            else:
-                                pass
-                            choari.add(game, ip)
-                            if game == currentPage:
-                                display_servers(stdscr, choari, currentPage)
+                                    stdscr.addstr(stdscr_y-3, PADDING_X, 'unknow game "%s"'%(lstgame[1]))
+
+                            if error == False:
+                                choari.add(game, ip)
+                                if game == currentPage:
+                                    display_servers(stdscr, choari, currentPage)
                 if strgame not in ['h','help'] and showHelp == True:
                     clear_help(stdscr)
                     showHelp = False
