@@ -104,6 +104,16 @@ class Choari:
             return game+" | "+text
         return ""
 
+    def add(self, game, ip, fav=False):
+        if fav == True:
+            ip = game+"|"+ip
+            game = "fav"
+        f = open(CFG_DIR+'/'+game+".lst", "a+");
+        f.write(ip+"\n")
+        f.close()
+        self.games.get(game).append(ip)
+        
+
 def clear_help(stdscr):
     stdscr_y, stdscr_x = stdscr.getmaxyx()
     y = stdscr_y-PADDING_Y
@@ -137,16 +147,20 @@ def display_servers(stdscr, choari, strgame):
     
     i = PADDING_Y+3
     numip = 0
+    game = strgame
     for ip in choari.games.get(strgame):
+        if strgame == 'fav':
+            game = ip.split('|')[0]
+            ip = ip.split('|')[1]
         numip = numip + 1
-        text = choari.refresh(strgame, ip, True).split("\n")[1:]
+        text = choari.refresh(game, ip, True).split("\n")
         if len(text) > 1:
-            stdscr.addstr(i, 2, '#%i %s'%(numip, text[0]))
-            i = i + 1
-            text = text[2:]
-            for line in text:
-                stdscr.addstr(i, 2, '%s'%(line))
+            stdscr.addstr(i, 2, '#%i %s'%(numip, text[1]))
+            if len(text) > 2:
                 i = i + 1
+                for line in text[2:]:
+                    stdscr.addstr(i, 2, '%s'%(line))
+                    i = i + 1
 
 def loop(stdscr):
     # init
@@ -216,12 +230,6 @@ def loop(stdscr):
                     elif strgame in ['q','quit']:
                         # quit
                         break
-                    elif strgame == 'play':
-                        # play
-                        break
-                    elif strgame == 'add':
-                        # play
-                        break
                     elif strgame in choari.games:
                         if len(choari.games[currentPage]) > 0 and strgame in range(1, len(choari.games[currentPage])):
                             # TODO: refresh only this server
@@ -230,6 +238,36 @@ def loop(stdscr):
                             # list all servers
                             currentPage = strgame
                             display_servers(stdscr, choari, strgame)
+                    else:
+                        lstgame = strgame.split(' ')
+                        if lstgame[0] == 'play':
+                            # play
+                            pass
+                        elif lstgame[0] == 'add':
+                            game = currentPage
+                            if len(lstgame) == 2:
+                                ip = lstgame[1]
+                            elif len(lstgame) == 3:
+                                if lstgame[1] == 'fav':
+                                    try:
+                                        # TODO
+                                        lstgame[2] = int(lstgame[2])
+                                        choari.add(currentPage, choari.games[currentPage][lstgame[2]], fav=True)
+                                    except:
+                                        # show error message
+                                        pass
+                                    pass
+                                elif lstgame[1] in choari.alias:
+                                    game = choari.alias[lstgame[1]]
+                                else:
+                                    # show error message
+                                    pass
+                                ip = lstgame[2]
+                            else:
+                                pass
+                            choari.add(game, ip)
+                            if game == currentPage:
+                                display_servers(stdscr, choari, currentPage)
                 if strgame not in ['h','help'] and showHelp == True:
                     clear_help(stdscr)
                     showHelp = False
