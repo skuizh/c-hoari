@@ -14,7 +14,7 @@ import os
 import sys
 import curses
 import shutil
-from subprocess import *
+import subprocess
 
 # CONSTANTS
 CFG_DIR = os.path.expanduser('~/.choari')
@@ -108,10 +108,9 @@ class Choari:
             else:
                 game = self.alias.get(game)
         if game != 'fav':
-            p = Popen('qstat -P -'+game+' '+host, shell=True, stdout=PIPE).stdout
-            text = p.read()
-            p.close()
-            return game+' | '+text
+            p = subprocess.Popen('qstat -P -'+game+' '+host, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            text = p.communicate()
+            return game+' | '+text[0]
         return ""
 
     def add(self, game, host, fav=False):
@@ -138,8 +137,9 @@ class Choari:
             else:
                 game = self.alias.get(game)
         if game in self.config['binaries']:
-            p = Popen(self.config['binaries'][game].replace('%s', host), shell=True, stdin=None, stdout=None, stderr=None)
-            p.close()
+            redirect2null = open(os.devnull, 'w')
+            subprocess.call(self.config['binaries'][game].replace('%s', host), shell=True, stdout=redirect2null, stderr=redirect2null)
+            redirect2null.close()
             return True
         return False
 
