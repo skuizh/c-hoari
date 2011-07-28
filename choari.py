@@ -13,6 +13,7 @@
 import os
 import sys
 import curses
+import shutil
 from subprocess import *
 
 # CONSTANTS
@@ -93,8 +94,12 @@ class Choari:
                     for line in f:
                         self.games.get(game).append(line.strip())
                 f.close
-        except:
-            sys.exit('can\'t write or read in '+CFG_DIR)
+            
+            if not os.path.lexists(CFG_DIR+'/config.py'):
+                shutil.copy(os.path.dirname(sys.argv[0])+'/config.sample.py', CFG_DIR+'/config.py')
+            execfile(CFG_DIR+'/config.py')
+        except Exception, e:
+            sys.exit("can't write or read in "+CFG_DIR+"\n"+str(e))
 
     def refresh(self, game, host, showPlayers=False):
         if game not in self.games:
@@ -125,6 +130,18 @@ class Choari:
         
     def bookmark(self, game, host):
         return self.add(game, host, fav=True)
+    
+    def play(self, game, host):
+        if game not in self.games:
+            if game not in self.alias:
+                return False
+            else:
+                game = self.alias.get(game)
+        if game in self.config['binaries']:
+            p = Popen(self.config['binaries'][game].replace('%s', host), shell=True, stdin=None, stdout=None, stderr=None)
+            p.close()
+            return True
+        return False
 
 def clear_help(stdscr):
     stdscr_y, stdscr_x = stdscr.getmaxyx()
@@ -180,7 +197,7 @@ def loop(stdscr):
     strgame = ''
     showHelp = False
     currentPage = 'fav'
-    tabbing = ['add', 'bookmark', 'e', 'refresh', 'h', 'help', 'q', 'quit']
+    tabbing = ['add', 'bookmark', 'e', 'refresh', 'play', 'h', 'help', 'q', 'quit']
     for alias in choari.alias:
         tabbing.append(alias)
     tabbing.sort()
@@ -291,8 +308,28 @@ def loop(stdscr):
                     else:
                         lstgame = strgame.split(' ')
                         if lstgame[0] == 'play':
-                            # play
-                            pass
+                            if len(lstgame) == 2:
+                                try:
+                                    lstgame[1] = int(lstgame[1])
+                                    if len(choari.games[currentPage]) >= lstgame[1]:
+                                        if currentPage == 'fav':
+                                            game = choari.games[currentPage][lstgame[1]-1].split('|')[0]
+                                            host = choari.games[currentPage][lstgame[1]-1].split('|')[1]
+                                        else:
+                                            game = currentPage
+                                            host = choari.games[currentPage][lstgame[1]-1]
+                                        if choari.play(game, host) == False:
+                                            # show error message
+                                            stdscr.addstr(stdscr_y-3, PADDING_X, '%s is probably not configured in %s/config.py'%(game, CFG_DIR))
+                                    else:
+                                        # show error message
+                                        stdscr.addstr(stdscr_y-3, PADDING_X, 'wrong index')
+                                except Exception, e:
+                                    # show error message
+                                    stdscr.addstr(stdscr_y-3, PADDING_X, 'param must be an integer %s'%str(e))
+                            else:
+                                # show error message
+                                stdscr.addstr(stdscr_y-3, PADDING_X, 'syntax is :play <id>')
                         elif lstgame[0] == 'bookmark':
                             if currentPage == 'fav':
                                 # show error message
